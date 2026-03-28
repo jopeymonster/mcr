@@ -30,16 +30,15 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser('campaigns', help='List campaigns')
 
     contacts_parser = subparsers.add_parser('contacts', help='List contacts in audience')
-    contacts_parser.add_argument('--list-id')
+    contacts_parser.add_argument('--audience-id')
 
     return parser
 
 
 def execute_command(args: argparse.Namespace) -> list[dict[str, Any]]:
     """Execute selected command and return normalized rows."""
-    args = prompt_for_missing(args)
     client = MailchimpClient(config_path=args.config)
-    client.get('')
+    client.validate_connection()
 
     if args.command == 'audiences':
         return list_audiences(client=client, limit=args.limit)
@@ -48,7 +47,11 @@ def execute_command(args: argparse.Namespace) -> list[dict[str, Any]]:
         return list_campaigns(client=client, limit=args.limit)
 
     if args.command == 'contacts':
-        return list_contacts(client=client, list_id=args.list_id, limit=args.limit)
+        return list_contacts(
+            client=client, 
+            audience_id=args.audience_id,
+            limit=args.limit,
+        )
 
     raise ValueError('Unknown command requested')
 
@@ -57,8 +60,7 @@ def main() -> None:
     """CLI application entry point."""
     parser = build_parser()
     args = parser.parse_args()
-    if not args.command:
-        args.command = prompt_for_missing(args).command
+    args = prompt_for_missing(args)
 
     rows = execute_command(args)
     output_results(

@@ -21,6 +21,10 @@ class MailchimpClient:
         self.session = requests.Session()
         self.session.auth = ('anystring', self.api_key)
         self.session.headers.update({'Accept': 'application/json'})
+    
+    def validate_connection(self) -> dict[str, Any]:
+        """Validate API access with root endpoint request."""
+        return self.get('')
 
     def get(self, endpoint: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
         """Perform GET request and return decoded JSON response."""
@@ -29,6 +33,17 @@ class MailchimpClient:
         try:
             response = self.session.get(url, params=params, timeout=30)
             response.raise_for_status()
+        except requests.HTTPError as exc:
+            detail = ''
+            try:
+                payload = response.json()
+                title = payload.get('title', 'Mailchimp API error')
+                message = payload.get('detail', '')
+                status = payload.get('status', response.status_code)
+                detail = f' (status={status}, title={title}, detail={message})'
+            except ValueError:
+                detail =f' (status={response.status_code}, body={response.text[:300]})'
+            raise RuntimeError(f'Mailchimp GET failed for {url}{detail}') from exc
         except requests.RequestException as exc:
             raise RuntimeError(f'Mailchimp GET failed for {url}: {exc}') from exc
 
@@ -46,6 +61,8 @@ class MailchimpClient:
         page_size: int = 100,
     ) -> list[dict[str, Any]]:
         """Fetch paginated endpoint until limit or API result exhaustion."""
+        if limit <= 0:
+            raise ValueError('limit must be greater than 0')
         records: list[dict[str, Any]] = []
         offset = 0
         query = params.copy() if params else {}

@@ -8,10 +8,14 @@ from typing import Any
 from mcr.client import MailchimpClient
 
 
-def list_contacts(client: MailchimpClient, list_id: str, limit: int) -> list[dict[str, Any]]:
+def list_contacts(
+        client: MailchimpClient, 
+        audience_id: str, 
+        limit: int,
+    ) -> list[dict[str, Any]]:
     """Return normalized contact rows for a given audience list."""
     members = client.get_paginated(
-        endpoint=f'lists/{list_id}/members',
+        endpoint=f'lists/{audience_id}/members',
         items_key='members',
         limit=limit,
     )

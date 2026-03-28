@@ -28,6 +28,8 @@ def generate_output_path(command: str, output_format: str, savefile: str | None 
 
     if savefile:
         candidate = Path(savefile)
+        if not candidate.suffix:
+            candidate = candidate.with_suffix(f'.{extension}')
         if candidate.is_absolute():
             return candidate
         return base_dir / candidate
@@ -42,10 +44,17 @@ def save_csv(rows: list[dict[str, Any]], path: Path) -> Path:
     if not rows:
         rows = [{'message': 'No records found'}]
 
+    fieldnames: list[str] = []
+    seen: set[str] = set()
+    for row in rows:
+        for key in row.keys():
+            if key not in seen:
+                seen.add(key)
+                fieldnames.append(key)
+
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open('w', encoding='utf-8', newline='') as handle:
-        fieldnames = list(rows[0].keys())
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, extrasaction='ignore')
         writer.writeheader()
         writer.writerows(rows)
     return path

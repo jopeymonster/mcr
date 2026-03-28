@@ -17,19 +17,12 @@ def prompt_for_missing(args: argparse.Namespace) -> argparse.Namespace:
             choice = input('Invalid command. Choose audiences, campaigns, or contacts: ').strip()
         args.command = choice
 
-    if args.command == 'contacts' and not getattr(args, 'list_id', None):
-        list_id = input('Enter Mailchimp list ID: ').strip()
-        while not list_id:
-            list_id = input('List ID is required. Enter Mailchimp list ID: ').strip()
-        args.list_id = list_id
-
-    if not getattr(args, 'config', None):
-        args.config = input('Enter path to auth config (default config/auth.json): ').strip()
-        if not args.config:
-            args.config = 'config/auth.json'
-
-    if not getattr(args, 'limit', None):
-        limit_input = input('Enter max results (default 100): ').strip()
-        args.limit = int(limit_input) if limit_input else 100
+    if args.command == 'contacts' and not getattr(args, 'audience_id', None):
+        audience_id = input('Enter Mailchimp audience ID: ').strip()
+        while not audience_id:
+            audience_id = input(
+                'Audience ID is required. Enter Mailchimp audience ID: '
+            ).strip()
+        args.audience_id = audience_id
 
     return args

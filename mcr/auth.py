@@ -18,8 +18,7 @@ def load_api_key(config_path: str) -> str:
 
     Raises:
         FileNotFoundError: If config file is missing.
-        KeyError: If API key field is not present.
-        ValueError: If API key is empty.
+        ValueError: If API key field is missing or empty.
     """
     path = Path(config_path)
     if not path.exists():

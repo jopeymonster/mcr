@@ -17,7 +17,7 @@ from mcr.prompts import prompt_for_missing
 def build_parser() -> argparse.ArgumentParser:
     """Build and return the CLI argument parser."""
     parser = argparse.ArgumentParser(
-        description='Read-only CLI tool for Mailchimp Marketing API'
+        description='Read-only CLI tool for Mailchimp Marketing API',
     )
     parser.add_argument('--config', default='config/auth.json')
     parser.add_argument('--output', choices=['csv', 'json', 'table'], default='csv')

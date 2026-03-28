@@ -18,7 +18,6 @@ def list_audiences(client: MailchimpClient, limit: int) -> list[dict[str, Any]]:
             {
                 'id': item.get('id', ''),
                 'name': item.get('name', ''),
-                'contact_email': item.get('contact', {}).get('email', ''),
                 'member_count': stats.get('member_count', 0),
                 'unsubscribe_count': stats.get('unsubscribe_count', 0),
             }

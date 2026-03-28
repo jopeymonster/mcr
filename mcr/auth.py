@@ -30,7 +30,9 @@ def load_api_key(config_path: str) -> str:
     api_key = payload.get('api_key')
     if api_key is None:
         api_key = payload.get('mailchimp_api_key')
-
+    if api_key == "YOUR_API_KEY":
+        raise ValueError('Placeholder key found in config file')
+    
     if not api_key:
         raise ValueError('Missing api_key in config file')
 

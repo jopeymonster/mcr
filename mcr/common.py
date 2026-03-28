@@ -101,6 +101,8 @@ def output_results(
 ) -> None:
     """Route output to CSV, JSON, or console table."""
     if output_format == 'table':
+        if savefile:
+            print('Output is to console, ignoring savefile')
         print_table(rows)
         return
 

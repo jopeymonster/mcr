@@ -2,7 +2,7 @@
 
 Mailchimp Reporter is a read-only command-line tool for pulling Mailchimp Marketing API data and exporting it as CSV, JSON, or a console table.
 
-## What this CLI supports
+## Supports
 
 - `audiences` - list audiences from the connected Mailchimp account
 - `campaigns` - list campaigns from the connected Mailchimp account

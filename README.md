@@ -20,6 +20,14 @@ When file output is used, files are saved under `~/mcr_outputs` unless you provi
 - Python 3.11+
 - A valid Mailchimp Marketing API key
 
+## Installation
+
+Install in editable mode from the repository root:
+
+```bash
+pip install -e .
+```
+
 ## Configure Mailchimp API key
 
 The CLI loads credentials from a JSON file. The current logic accepts either `api_key` or `mailchimp_api_key` as the JSON key name.
@@ -47,6 +55,16 @@ Recommended local setup:
 ### Automated execution (non-interactive)
 
 Run commands with all required options supplied:
+
+```bash
+mcr audiences --output table
+```
+
+```bash
+python main.py audiences --output table
+```
+
+Or run with full options supplied:
 
 ```bash
 python main.py audiences --config auth.json --output csv --limit 50

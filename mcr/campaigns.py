@@ -11,7 +11,9 @@ from mcr.client import MailchimpClient
 def list_campaigns(client: MailchimpClient, limit: int) -> list[dict[str, Any]]:
     """Return normalized campaign rows."""
     campaigns = client.get_paginated(
-        endpoint='campaigns', items_key='campaigns', limit=limit
+        endpoint='campaigns', 
+        items_key='campaigns', 
+        limit=limit,
     )
     rows: list[dict[str, Any]] = []
     for item in campaigns:

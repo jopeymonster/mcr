@@ -12,11 +12,13 @@ from mcr.client import MailchimpClient
 from mcr.common import output_results
 from mcr.contacts import list_contacts
 from mcr.prompts import prompt_for_missing
-from mcr.prompts import VALID_COMMANDS
+from mcr.prompts import VALID_REPORTS
 
 
 def build_pre_parser() -> argparse.ArgumentParser:
-    """Build parser for universal args that may appear without a command."""
+    """
+    Build parser for universal args that may appear without a report scope.
+    """
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument('--config')
     parser.add_argument('--output', choices=['csv', 'json', 'table'])
@@ -25,18 +27,22 @@ def build_pre_parser() -> argparse.ArgumentParser:
 
 
 def add_common_args(parser: argparse.ArgumentParser) -> None:
-    """Add common args to a command parser."""
+    """
+    Add common args to a report parser.
+    """
     parser.add_argument('--config')
     parser.add_argument('--output', choices=['csv', 'json', 'table'])
     parser.add_argument('--savefile')
 
 
 def build_parser() -> argparse.ArgumentParser:
-    """Build the full command parser."""
+    """
+    Build the full report scope parser.
+    """
     parser = argparse.ArgumentParser(
         description='Read-only CLI tool for Mailchimp Marketing API',
     )
-    subparsers = parser.add_subparsers(dest='command')
+    subparsers = parser.add_subparsers(dest='report')
 
     audiences_parser = subparsers.add_parser('audiences', help='List audiences')
     add_common_args(audiences_parser)
@@ -57,46 +63,55 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def detect_command(tokens: list[str]) -> str | None:
-    """Return the first recognized command token, if present."""
+def detect_report(tokens: list[str]) -> str | None:
+    """
+    Return the first recognized report token, if present.
+    """
     for token in tokens:
-        if token in VALID_COMMANDS:
+        if token in VALID_REPORTS:
             return token
     return None
 
 
-def execute_command(args: argparse.Namespace) -> list[dict[str, Any]]:
-    """Execute selected command and return normalized rows."""
+def execute_report(args: argparse.Namespace) -> list[dict[str, Any]]:
+    """
+    Execute selected report and return normalized rows.
+    """
     client = MailchimpClient(config_path=args.config)
     client.validate_connection()
 
-    if args.command == 'audiences':
-        return list_audiences(client=client, limit=args.limit)
+    if args.report == 'audiences':
+        return list_audiences(
+            client=client,
+            limit=args.limit,
+            )
 
-    if args.command == 'campaigns':
-        return list_campaigns(client=client, limit=args.limit)
+    if args.report == 'campaigns':
+        return list_campaigns(
+            client=client,
+            limit=args.limit,
+            )
 
-    if args.command == 'contacts':
+    if args.report == 'contacts':
         return list_contacts(
             client=client,
             audience_id=args.audience_id,
             limit=args.limit,
         )
 
-    raise ValueError('Unknown command requested')
+    raise ValueError('Unknown report requested')
 
 
 def main() -> None:
-    """CLI application entry point."""
     argv = sys.argv[1:]
 
     pre_parser = build_pre_parser()
     pre_args, remaining = pre_parser.parse_known_args(argv)
 
-    command = detect_command(remaining)
-    if not command:
+    report = detect_report(remaining)
+    if not report:
         temp_args = argparse.Namespace(
-            command=None,
+            report=None,
             config=pre_args.config,
             output=pre_args.output,
             savefile=pre_args.savefile,
@@ -104,11 +119,11 @@ def main() -> None:
             audience_id=None,
         )
         temp_args = prompt_for_missing(temp_args)
-        command = temp_args.command
+        report = temp_args.report
 
-        remaining = [command] + remaining
+        remaining = [report] + remaining
 
-        if temp_args.command == 'contacts' and temp_args.audience_id:
+        if temp_args.report == 'contacts' and temp_args.audience_id:
             remaining.extend(['--audience-id', temp_args.audience_id])
 
     parser = build_parser()
@@ -123,11 +138,11 @@ def main() -> None:
 
     args = prompt_for_missing(args)
 
-    rows = execute_command(args)
+    rows = execute_report(args)
     output_results(
         rows=rows,
         output_format=args.output,
-        command=args.command,
+        report=args.report,
         savefile=args.savefile,
     )
 

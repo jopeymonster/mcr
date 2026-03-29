@@ -11,10 +11,35 @@ from mcr.auth import extract_data_center, load_api_key
 
 
 class MailchimpClient:
-    """Minimal Mailchimp HTTP client for read-only API calls."""
+    """
+    GET HTTP client object 
+    for read-only API calls 
+    compatible with Python 3.11+
+    curated for used with Mailchimp API.
+
+    Libraries:
+        - Requests HTTP Library / 'requests'
+        - Internal module for API key session registry / 'auth'
+    
+    Mailchimp specifications:
+        - Session validation at root endpoint
+        - Uses paginated GET API option until
+        LIMIT parameter/argument or result exhaustion
+
+    """
 
     def __init__(self, config_path: str) -> None:
-        """Initialize client from auth config path."""
+        """Initialize client from auth config path
+        curated for used with Mailchimp API.
+        
+        Supports JSON headers and response, 
+        decodes into dictionary and 
+        transforms into rows for each output control.
+
+        Base API URL Endpoint (api key data center dependent '{dc}')
+        - 'https://{dc}.api.mailchimp.com/3.0/'
+
+        """
         self.api_key = load_api_key(config_path)
         dc = extract_data_center(self.api_key)
         self.base_url = f'https://{dc}.api.mailchimp.com/3.0/'
@@ -23,11 +48,13 @@ class MailchimpClient:
         self.session.headers.update({'Accept': 'application/json'})
     
     def validate_connection(self) -> dict[str, Any]:
-        """Validate API access with root endpoint request."""
+        """Validate API access with root endpoint request.
+        """
         return self.get('')
 
     def get(self, endpoint: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Perform GET request and return decoded JSON response."""
+        """Perform GET request and return decoded dictionary response
+        curated for used with Mailchimp API."""
         cleaned = endpoint.lstrip('/')
         url = f'{self.base_url}{cleaned}'
         try:
@@ -60,7 +87,8 @@ class MailchimpClient:
         params: dict[str, Any] | None = None,
         page_size: int = 100,
     ) -> list[dict[str, Any]]:
-        """Fetch paginated endpoint until limit or API result exhaustion."""
+        """Fetch paginated endpoint until limit or API result exhaustion.
+        """
         if limit <= 0:
             raise ValueError('limit must be greater than 0')
         records: list[dict[str, Any]] = []

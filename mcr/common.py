@@ -10,13 +10,15 @@ from pathlib import Path
 from typing import Any
 
 
-def generate_output_path(command: str, output_format: str, savefile: str | None = None) -> Path:
-    """Generate output path in user home output directory.
+def generate_output_path(report: str, output_format: str, savefile: str | None = None) -> Path:
+    """
+    Generate output path in user home output directory.
 
     Args:
-        command (str): Command name used for default file naming.
-        output_format (str): One of csv or json.
-        savefile (str | None): Optional path override.
+        report type (str): Report type name used for default file naming.
+         - Options: 'audiences' / 'campaigns' / 'contacts'
+        output_format (str): CSV or JSON.
+        savefile (str | None): Optional path override
 
     Returns:
         Path: Output path for saving file.
@@ -35,12 +37,14 @@ def generate_output_path(command: str, output_format: str, savefile: str | None 
         return base_dir / candidate
 
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    filename = f'{command}_{timestamp}.{extension}'
+    filename = f'{report}_{timestamp}.{extension}'
     return base_dir / filename
 
 
 def save_csv(rows: list[dict[str, Any]], path: Path) -> Path:
-    """Save rows as CSV file."""
+    """
+    Save rows as CSV file.
+    """
     if not rows:
         rows = [{'message': 'No records found'}]
 
@@ -61,7 +65,9 @@ def save_csv(rows: list[dict[str, Any]], path: Path) -> Path:
 
 
 def save_json(rows: list[dict[str, Any]], path: Path) -> Path:
-    """Save rows as JSON file."""
+    """
+    Save rows as JSON file.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open('w', encoding='utf-8') as handle:
         json.dump(rows, handle, indent=2)
@@ -69,7 +75,9 @@ def save_json(rows: list[dict[str, Any]], path: Path) -> Path:
 
 
 def print_table(rows: list[dict[str, Any]]) -> None:
-    """Print row data as plain text table."""
+    """
+    Print row data as plain text table.
+    """
     if not rows:
         print('No records found')
         return
@@ -96,10 +104,12 @@ def print_table(rows: list[dict[str, Any]]) -> None:
 def output_results(
     rows: list[dict[str, Any]],
     output_format: str,
-    command: str,
+    report: str,
     savefile: str | None,
 ) -> None:
-    """Route output to CSV, JSON, or console table."""
+    """
+    Route output to CSV, JSON, or console table.
+    """
     if output_format == 'table':
         if savefile:
             print('Output is to console, ignoring savefile')
@@ -107,7 +117,7 @@ def output_results(
         return
 
     out_path = generate_output_path(
-        command=command,
+        report=report,
         output_format=output_format,
         savefile=savefile,
     )

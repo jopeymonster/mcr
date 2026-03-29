@@ -9,7 +9,9 @@ from mcr.client import MailchimpClient
 
 
 def list_audiences(client: MailchimpClient, limit: int) -> list[dict[str, Any]]:
-    """Return normalized audience rows."""
+    """
+    Return normalized audience rows.
+    """
     lists = client.get_paginated(endpoint='lists', items_key='lists', limit=limit)
     rows: list[dict[str, Any]] = []
     for item in lists:

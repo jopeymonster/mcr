@@ -13,7 +13,9 @@ def list_contacts(
         audience_id: str, 
         limit: int,
     ) -> list[dict[str, Any]]:
-    """Return normalized contact rows for a given audience list."""
+    """
+    Return normalized contact rows for a given audience list.
+    """
     members = client.get_paginated(
         endpoint=f'lists/{audience_id}/members',
         items_key='members',

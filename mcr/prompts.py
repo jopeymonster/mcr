@@ -5,14 +5,16 @@ from __future__ import annotations
 import argparse
 
 
-VALID_COMMANDS = ['audiences', 'campaigns', 'contacts']
+VALID_REPORTS = ['audiences', 'campaigns', 'contacts']
 FILE_OUTPUTS = {'csv', 'json'}
 
 
 def prompt_for_missing(args: argparse.Namespace) -> argparse.Namespace:
-    """Prompt for required missing arguments and return updated namespace."""
-    if not hasattr(args, 'command'):
-        args.command = None
+    """
+    Prompt for required missing arguments and return updated namespace.
+    """
+    if not hasattr(args, 'report'):
+        args.report = None
     if not hasattr(args, 'config'):
         args.config = None
     if not hasattr(args, 'output'):
@@ -24,15 +26,15 @@ def prompt_for_missing(args: argparse.Namespace) -> argparse.Namespace:
     if not hasattr(args, 'audience_id'):
         args.audience_id = None
 
-    if not args.command:
-        choice = input('Choose command (audiences/campaigns/contacts): ').strip()
-        while choice not in VALID_COMMANDS:
+    if not args.report:
+        choice = input('Choose report type (audiences/campaigns/contacts): ').strip()
+        while choice not in VALID_REPORTS:
             choice = input(
-                'Invalid command. Choose audiences, campaigns, or contacts: '
+                'Invalid report. Choose audiences, campaigns, or contacts: '
             ).strip()
-        args.command = choice
+        args.report = choice
 
-    if args.command == 'contacts' and not args.audience_id:
+    if args.report == 'contacts' and not args.audience_id:
         audience_id = input('Enter Mailchimp audience ID: ').strip()
         while not audience_id:
             audience_id = input(
@@ -56,7 +58,7 @@ def prompt_for_missing(args: argparse.Namespace) -> argparse.Namespace:
             ).strip().lower()
         args.output = output_input or 'csv'
 
-    if args.limit is None and args.command in {'audiences', 'campaigns', 'contacts'}:
+    if args.limit is None and args.report in {'audiences', 'campaigns', 'contacts'}:
         limit_input = input('Enter max results [100]: ').strip()
         while limit_input:
             try:

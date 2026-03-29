@@ -1,4 +1,4 @@
-from mcr.main import main
+from mcr.main import main as prod_main
 
 if __name__ == '__main__':
-    main()
+    prod_main()

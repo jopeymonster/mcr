@@ -73,6 +73,26 @@ def detect_report(tokens: list[str]) -> str | None:
     return None
 
 
+def normalize_report_argv(tokens: list[str], report: str) -> list[str]:
+    """
+    Rebuild argv so the selected report is first, followed by all other args.
+
+    This allows flexible user ordering such as:
+    - python main.py contacts --audience-id X --limit 10 --output table
+    - python main.py --audience-id X --limit 10 contacts --output table
+    """
+    reordered: list[str] = []
+    report_removed = False
+
+    for token in tokens:
+        if not report_removed and token == report:
+            report_removed = True
+            continue
+        reordered.append(token)
+
+    return [report] + reordered
+
+
 def execute_report(args: argparse.Namespace) -> list[dict[str, Any]]:
     """
     Execute selected report and return normalized rows.
@@ -109,8 +129,10 @@ def main() -> None:
     pre_args, remaining = pre_parser.parse_known_args(argv)
 
     report = detect_report(remaining)
+    prompted_args: argparse.Namespace | None = None
+
     if not report:
-        temp_args = argparse.Namespace(
+        prompted_args = argparse.Namespace(
             report=None,
             config=pre_args.config,
             output=pre_args.output,
@@ -118,13 +140,16 @@ def main() -> None:
             limit=None,
             audience_id=None,
         )
-        temp_args = prompt_for_missing(temp_args)
-        report = temp_args.report
+        prompted_args = prompt_for_missing(prompted_args)
+        report = prompted_args.report
 
-        remaining = [report] + remaining
+        remaining = normalize_report_argv(remaining, report)
 
-        if temp_args.report == 'contacts' and temp_args.audience_id:
-            remaining.extend(['--audience-id', temp_args.audience_id])
+        if report == 'contacts' and prompted_args.audience_id:
+            if '--audience-id' not in remaining:
+                remaining.extend(['--audience-id', prompted_args.audience_id])
+    else:
+        remaining = normalize_report_argv(remaining, report)
 
     parser = build_parser()
     args = parser.parse_args(remaining)
@@ -136,7 +161,23 @@ def main() -> None:
     if pre_args.savefile is not None:
         args.savefile = pre_args.savefile
 
-    args = prompt_for_missing(args)
+    if prompted_args is not None:
+        if getattr(args, 'config', None) is None:
+            args.config = prompted_args.config
+        if getattr(args, 'output', None) is None:
+            args.output = prompted_args.output
+        if getattr(args, 'savefile', None) is None:
+            args.savefile = prompted_args.savefile
+        if getattr(args, 'limit', None) is None:
+            args.limit = prompted_args.limit
+        if (
+            getattr(args, 'report', None) == 'contacts'
+            and getattr(args, 'audience_id', None) is None
+        ):
+            args.audience_id = prompted_args.audience_id
+
+    if prompted_args is None:
+        args = prompt_for_missing(args)
 
     rows = execute_report(args)
     output_results(

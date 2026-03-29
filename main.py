@@ -11,8 +11,7 @@ from mcr.campaigns import list_campaigns
 from mcr.client import MailchimpClient
 from mcr.common import output_results
 from mcr.contacts import list_contacts
-from mcr.prompts import prompt_for_missing
-from mcr.prompts import VALID_REPORTS
+from mcr.prompts import prompt_for_missing, VALID_REPORTS
 
 
 def build_pre_parser() -> argparse.ArgumentParser:
@@ -75,11 +74,7 @@ def detect_report(tokens: list[str]) -> str | None:
 
 def normalize_report_argv(tokens: list[str], report: str) -> list[str]:
     """
-    Rebuild argv so the selected report is first, followed by all other args.
-
-    This allows flexible user ordering such as:
-    - python main.py contacts --audience-id X --limit 10 --output table
-    - python main.py --audience-id X --limit 10 contacts --output table
+    Rebuild argv to eliminate parsing scope errors.
     """
     reordered: list[str] = []
     report_removed = False

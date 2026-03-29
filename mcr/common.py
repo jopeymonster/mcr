@@ -10,12 +10,12 @@ from pathlib import Path
 from typing import Any
 
 
-def _timestamp_string() -> str:
+def timestamp_string() -> str:
     """Return a compact timestamp string for filenames."""
     return datetime.now().strftime('%Y%m%d_%H%M%S')
 
 
-def _append_timestamp(path: Path, timestamp: str) -> Path:
+def append_timestamp(path: Path, timestamp: str) -> Path:
     """Append timestamp before the suffix, preserving the directory."""
     if path.suffix:
         return path.with_name(f'{path.stem}_{timestamp}{path.suffix}')
@@ -39,12 +39,12 @@ def generate_output_path(report: str, output_format: str, savefile: str | None =
     base_dir.mkdir(parents=True, exist_ok=True)
 
     extension = 'csv' if output_format == 'csv' else 'json'
-    timestamp = _timestamp_string()
+    timestamp = timestamp_string()
 
     if savefile:
         candidate = Path(savefile)
         if candidate.suffix:
-            candidate = _append_timestamp(candidate, timestamp)
+            candidate = append_timestamp(candidate, timestamp)
         else:
             candidate = candidate.with_name(f'{candidate.name}_{timestamp}.{extension}')
 

@@ -1,4 +1,4 @@
-# client.py
+# # mcr/client.py
 """HTTP client for Mailchimp Marketing API requests."""
 
 from __future__ import annotations

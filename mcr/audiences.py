@@ -1,4 +1,4 @@
-# audiences.py
+# # mcr/audiences.py
 """Audience operations for Mailchimp lists endpoints."""
 
 from __future__ import annotations
@@ -11,8 +11,14 @@ from mcr.client import MailchimpClient
 def list_audiences(client: MailchimpClient, limit: int) -> list[dict[str, Any]]:
     """
     Return normalized audience rows.
+    Endpoint = '/lists'
+    - uses 'lists' methods, 'audience' aligns with reporting naming convention
     """
-    lists = client.get_paginated(endpoint='lists', items_key='lists', limit=limit)
+    lists = client.get_paginated(
+        endpoint='lists', 
+        items_key='lists', 
+        limit=limit
+    )
     rows: list[dict[str, Any]] = []
     for item in lists:
         stats = item.get('stats', {})

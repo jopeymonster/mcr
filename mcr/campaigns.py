@@ -1,4 +1,4 @@
-# campaigns.py
+# # mcr/campaigns.py
 """Campaign operations for Mailchimp campaigns endpoint."""
 
 from __future__ import annotations
@@ -9,7 +9,11 @@ from mcr.client import MailchimpClient
 
 
 def list_campaigns(client: MailchimpClient, limit: int) -> list[dict[str, Any]]:
-    """Return normalized campaign rows."""
+    """
+    Return normalized campaign rows.
+    Endpoint = '/campaigns'
+    - campaigns supports audience_id --> list_id as a query parameter
+    """
     campaigns = client.get_paginated(
         endpoint='campaigns', 
         items_key='campaigns', 

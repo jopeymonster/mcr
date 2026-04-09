@@ -1,3 +1,4 @@
+# mcr/prompts.py
 """Interactive prompt helpers for missing CLI arguments."""
 
 from __future__ import annotations

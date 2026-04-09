@@ -1,4 +1,4 @@
-"""Command line interface for Mailchimp Marketing API read-only operations."""
+# mcr/main.py"""Command line interface for Mailchimp Marketing API read-only operations."""
 
 from __future__ import annotations
 
@@ -9,6 +9,7 @@ from typing import Any
 from mcr.audiences import list_audiences
 from mcr.campaigns import list_campaigns
 from mcr.client import MailchimpClient
+from mcr.args import normalize_args
 from mcr.common import output_results
 from mcr.contacts import list_contacts
 from mcr.prompts import prompt_for_missing, VALID_REPORTS
@@ -88,30 +89,30 @@ def normalize_report_argv(tokens: list[str], report: str) -> list[str]:
     return [report] + reordered
 
 
-def execute_report(args: argparse.Namespace) -> list[dict[str, Any]]:
+def execute_report(normalized_args: dict[str, Any]) -> list[dict[str, Any]]:
     """
     Execute selected report and return normalized rows.
     """
-    client = MailchimpClient(config_path=args.config)
+    client = MailchimpClient(config_path=normalized_args['config'])
     client.validate_connection()
 
-    if args.report == 'audiences':
+    if normalized_args['report'] == 'audiences':
         return list_audiences(
             client=client,
-            limit=args.limit,
+            limit=normalized_args['limit'],
             )
 
-    if args.report == 'campaigns':
+    if normalized_args['report'] == 'campaigns':
         return list_campaigns(
             client=client,
-            limit=args.limit,
+            limit=normalized_args['limit'],
             )
 
-    if args.report == 'contacts':
+    if normalized_args['report'] == 'contacts':
         return list_contacts(
             client=client,
-            audience_id=args.audience_id,
-            limit=args.limit,
+            audience_id=normalized_args['audience_id'],
+            limit=normalized_args['limit'],
         )
 
     raise ValueError('Unknown report requested')
@@ -174,12 +175,13 @@ def main() -> None:
     if prompted_args is None:
         args = prompt_for_missing(args)
 
-    rows = execute_report(args)
+    normalized_args = normalize_args(args)
+    rows = execute_report(normalized_args)
     output_results(
         rows=rows,
-        output_format=args.output,
-        report=args.report,
-        savefile=args.savefile,
+        output_format=normalized_args['output'],
+        report=normalized_args['report'],
+        savefile=normalized_args['savefile'],
     )
 
 

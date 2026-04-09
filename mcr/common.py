@@ -1,4 +1,4 @@
-# common.py
+# # mcr/common.py
 """Output and formatting helpers for CLI responses."""
 
 from __future__ import annotations

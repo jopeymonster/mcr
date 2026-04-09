@@ -1,4 +1,4 @@
-# contacts.py
+# # mcr/contacts.py
 """Contact operations for Mailchimp list members endpoint."""
 
 from __future__ import annotations
@@ -15,6 +15,8 @@ def list_contacts(
     ) -> list[dict[str, Any]]:
     """
     Return normalized contact rows for a given audience list.
+    Endpoint = 'lists/{audience_id}/members'
+    - audience_id for contacts is path-based list_id input
     """
     members = client.get_paginated(
         endpoint=f'lists/{audience_id}/members',

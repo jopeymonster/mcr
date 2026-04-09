@@ -1,4 +1,4 @@
-# auth.py
+# # mcr/auth.py
 """Authentication helpers for Mailchimp API access."""
 
 from __future__ import annotations

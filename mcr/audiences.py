@@ -8,16 +8,21 @@ from typing import Any
 from mcr.client import MailchimpClient
 
 
-def list_audiences(client: MailchimpClient, limit: int) -> list[dict[str, Any]]:
+def list_audiences(
+        client: MailchimpClient, 
+        limit: int,
+        api_params: dict[str, Any] | None = None,
+        ) -> list[dict[str, Any]]:
     """
     Return normalized audience rows.
     Endpoint = '/lists'
     - uses 'lists' methods, 'audience' aligns with reporting naming convention
     """
     lists = client.get_paginated(
-        endpoint='lists', 
-        items_key='lists', 
-        limit=limit
+        endpoint='lists',
+        items_key='lists',
+        limit=limit,
+        params=api_params,
     )
     rows: list[dict[str, Any]] = []
     for item in lists:

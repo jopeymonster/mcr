@@ -8,7 +8,11 @@ from typing import Any
 from mcr.client import MailchimpClient
 
 
-def list_campaigns(client: MailchimpClient, limit: int) -> list[dict[str, Any]]:
+def list_campaigns(
+        client: MailchimpClient, 
+        limit: int,
+        api_params: dict[str, Any] | None = None,
+        ) -> list[dict[str, Any]]:
     """
     Return normalized campaign rows.
     Endpoint = '/campaigns'
@@ -18,6 +22,7 @@ def list_campaigns(client: MailchimpClient, limit: int) -> list[dict[str, Any]]:
         endpoint='campaigns', 
         items_key='campaigns', 
         limit=limit,
+        params=api_params,
     )
     rows: list[dict[str, Any]] = []
     for item in campaigns:

@@ -1,4 +1,7 @@
-# mcr/main.py"""Command line interface for Mailchimp Marketing API read-only operations."""
+# mcr/main.py
+"""
+Command line interface for Mailchimp Marketing API read-only operations.
+"""
 
 from __future__ import annotations
 
@@ -33,6 +36,14 @@ def add_common_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument('--config')
     parser.add_argument('--output', choices=['csv', 'json', 'table'])
     parser.add_argument('--savefile')
+    parser.add_argument('--start-date')
+    parser.add_argument('--end-date')
+    parser.add_argument('--last', type=int)
+    parser.add_argument(
+        '--previous',
+        choices=['week', 'month', 'quarter', 'year'],
+        help='Use a completed named period before the current one.',
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -100,12 +111,14 @@ def execute_report(normalized_args: dict[str, Any]) -> list[dict[str, Any]]:
         return list_audiences(
             client=client,
             limit=normalized_args['limit'],
+            api_params=normalized_args['api_params'],
             )
 
     if normalized_args['report'] == 'campaigns':
         return list_campaigns(
             client=client,
             limit=normalized_args['limit'],
+            api_params=normalized_args['api_params'],
             )
 
     if normalized_args['report'] == 'contacts':
@@ -113,6 +126,7 @@ def execute_report(normalized_args: dict[str, Any]) -> list[dict[str, Any]]:
             client=client,
             audience_id=normalized_args['audience_id'],
             limit=normalized_args['limit'],
+            api_params=normalized_args['api_params'],
         )
 
     raise ValueError('Unknown report requested')
@@ -135,6 +149,10 @@ def main() -> None:
             savefile=pre_args.savefile,
             limit=None,
             audience_id=None,
+            start_date=None,
+            end_date=None,
+            last=None,
+            previous=None,
         )
         prompted_args = prompt_for_missing(prompted_args)
         report = prompted_args.report
@@ -166,6 +184,14 @@ def main() -> None:
             args.savefile = prompted_args.savefile
         if getattr(args, 'limit', None) is None:
             args.limit = prompted_args.limit
+        if getattr(args, 'start_date', None) is None:
+            args.start_date = prompted_args.start_date
+        if getattr(args, 'end_date', None) is None:
+            args.end_date = prompted_args.end_date
+        if getattr(args, 'last', None) is None:
+            args.last = prompted_args.last
+        if getattr(args, 'previous', None) is None:
+            args.previous = prompted_args.previous
         if (
             getattr(args, 'report', None) == 'contacts'
             and getattr(args, 'audience_id', None) is None

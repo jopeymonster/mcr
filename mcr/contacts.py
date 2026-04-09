@@ -12,6 +12,7 @@ def list_contacts(
         client: MailchimpClient, 
         audience_id: str, 
         limit: int,
+        api_params: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
     """
     Return normalized contact rows for a given audience list.
@@ -22,6 +23,7 @@ def list_contacts(
         endpoint=f'lists/{audience_id}/members',
         items_key='members',
         limit=limit,
+        params=api_params,
     )
     rows: list[dict[str, Any]] = []
     for item in members:

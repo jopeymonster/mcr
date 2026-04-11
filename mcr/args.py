@@ -19,8 +19,8 @@ API_PARAM_MAP: dict[str, dict[str, str]] = {
     },
     'audiences': {
         'limit': 'count',
-        'start_date': 'since_date_created',
-        'end_date': 'before_date_created',
+        'start_date': 'since_campaign_last_sent',
+        'end_date': 'before_campaign_last_sent',
     },
     'contacts': {
         'limit': 'count',

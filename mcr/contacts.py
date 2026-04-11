@@ -34,6 +34,8 @@ def list_contacts(
                 'status': item.get('status', ''),
                 'full_name': item.get('full_name', ''),
                 'member_rating': item.get('member_rating', 0),
+                'timestamp_signup': item.get('timestamp_signup',''),
+                'timestamp_opt': item.get('timestamp_opt',''),
                 'last_changed': item.get('last_changed', ''),
             }
         )

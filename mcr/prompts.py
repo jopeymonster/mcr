@@ -26,6 +26,8 @@ def prompt_for_missing(args: argparse.Namespace) -> argparse.Namespace:
         args.limit = None
     if not hasattr(args, 'audience_id'):
         args.audience_id = None
+    if not hasattr(args, 'audience'):
+        args.audience = None
 
     if not args.report:
         choice = input('Choose report type (audiences/campaigns/contacts): ').strip()
@@ -35,7 +37,7 @@ def prompt_for_missing(args: argparse.Namespace) -> argparse.Namespace:
             ).strip()
         args.report = choice
 
-    if args.report == 'contacts' and not args.audience_id:
+    if args.report == 'contacts' and not args.audience_id and not args.audience:
         audience_id = input('Enter Mailchimp audience ID: ').strip()
         while not audience_id:
             audience_id = input(

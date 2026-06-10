@@ -12,12 +12,26 @@ def list_audiences(
         client: MailchimpClient, 
         limit: int,
         api_params: dict[str, Any] | None = None,
+        audience_id: str | None = None,
         ) -> list[dict[str, Any]]:
     """
     Return normalized audience rows.
     Endpoint = '/lists'
     - uses 'lists' methods, 'audience' aligns with reporting naming convention
     """
+
+    if audience_id:
+        audience = client.get(endpoint=f'lists/{audience_id}')
+        stats = audience.get('stats', {})
+        return [
+            {
+                'id': audience.get('id', ''),
+                'name': audience.get('name', ''),
+                'member_count': stats.get('member_count', 0),
+                'unsubscribe_count': stats.get('unsubscribe_count', 0),
+            }
+        ]
+
     lists = client.get_paginated(
         endpoint='lists',
         items_key='lists',

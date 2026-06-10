@@ -5,8 +5,7 @@ from __future__ import annotations
 
 import argparse
 
-
-VALID_REPORTS = ['audiences', 'campaigns', 'contacts']
+VALID_REPORTS = ['audiences', 'campaigns', 'contacts', 'whoami']
 FILE_OUTPUTS = {'csv', 'json'}
 
 
@@ -26,16 +25,18 @@ def prompt_for_missing(args: argparse.Namespace) -> argparse.Namespace:
         args.limit = None
     if not hasattr(args, 'audience_id'):
         args.audience_id = None
+    if not hasattr(args, 'audience'):
+        args.audience = None
 
     if not args.report:
-        choice = input('Choose report type (audiences/campaigns/contacts): ').strip()
+        choice = input('Choose report type (audiences/campaigns/contacts/whoami): ').strip()
         while choice not in VALID_REPORTS:
             choice = input(
-                'Invalid report. Choose audiences, campaigns, or contacts: '
+                'Invalid report. Choose audiences, campaigns, contacts, or whoami: '
             ).strip()
         args.report = choice
 
-    if args.report == 'contacts' and not args.audience_id:
+    if args.report == 'contacts' and not args.audience_id and not args.audience:
         audience_id = input('Enter Mailchimp audience ID: ').strip()
         while not audience_id:
             audience_id = input(

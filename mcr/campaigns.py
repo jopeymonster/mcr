@@ -33,6 +33,7 @@ def list_campaigns(
                 'type': item.get('type', ''),
                 'emails_sent': item.get('emails_sent', 0),
                 'subject_line': item.get('settings', {}).get('subject_line', ''),
+                'title': item.get('settings', {}).get('title', ''),
                 'send_time': item.get('send_time', ''),
             }
         )

@@ -4,11 +4,8 @@
 from __future__ import annotations
 
 import argparse
+from datetime import date, datetime, time, timedelta, timezone
 from typing import Any
-from datetime import (
-    date, datetime, time, timedelta, timezone
-)
-
 
 API_PARAM_MAP: dict[str, dict[str, str]] = {
     'campaigns': {
@@ -231,6 +228,9 @@ def normalize_args(args: argparse.Namespace) -> dict[str, Any]:
         'end_date': getattr(args, 'end_date', None),
         'last': getattr(args, 'last', None),
         'previous': getattr(args, 'previous', None),
+        'subject': getattr(args, 'subject', None),
+        'email': getattr(args, 'email', None),
+        'name': getattr(args, 'name', None),
         'api_params': {},
         'filters': {},
     }
@@ -239,5 +239,10 @@ def normalize_args(args: argparse.Namespace) -> dict[str, Any]:
     normalized['start_date'] = resolved_start
     normalized['end_date'] = resolved_end
 
+    normalized['filters'] = {
+        'subject': normalized.get('subject'),
+        'email': normalized.get('email'),
+        'name': normalized.get('name'),
+    }
     normalized['api_params'] = build_api_params(normalized)
     return normalized

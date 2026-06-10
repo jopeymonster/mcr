@@ -9,14 +9,15 @@ import argparse
 import sys
 from typing import Any
 
-from mcr.audiences import list_audiences
+from mcr.args import normalize_args
+from mcr.audiences import list_audiences, resolve_audience_id
 from mcr.campaigns import list_campaigns
 from mcr.client import MailchimpClient
 from mcr.common import output_results
 from mcr.contacts import list_contacts
-from mcr.resolver import resolve_audience
-from mcr.args import build_api_params, normalize_args
-from mcr.prompts import prompt_for_missing, VALID_REPORTS
+from mcr.filters import apply_local_filters
+from mcr.prompts import VALID_REPORTS, prompt_for_missing
+from mcr.whoami import whoami
 
 
 def build_pre_parser() -> argparse.ArgumentParser:
@@ -59,14 +60,15 @@ def build_parser() -> argparse.ArgumentParser:
     audiences_parser = subparsers.add_parser('audiences', help='List audiences')
     add_common_args(audiences_parser)
     audiences_parser.add_argument('--limit', type=int)
-    audiences_parser.add_argument('--audience')
     audiences_parser.add_argument('--audience-id')
+    audiences_parser.add_argument('--audience')
 
     campaigns_parser = subparsers.add_parser('campaigns', help='List campaigns')
     add_common_args(campaigns_parser)
     campaigns_parser.add_argument('--limit', type=int)
-    campaigns_parser.add_argument('--audience')
     campaigns_parser.add_argument('--audience-id')
+    campaigns_parser.add_argument('--audience')
+    campaigns_parser.add_argument('--subject')
 
     contacts_parser = subparsers.add_parser(
         'contacts',
@@ -76,6 +78,14 @@ def build_parser() -> argparse.ArgumentParser:
     contacts_parser.add_argument('--limit', type=int)
     contacts_parser.add_argument('--audience')
     contacts_parser.add_argument('--audience-id')
+    contacts_parser.add_argument('--audience')
+    contacts_parser.add_argument('--email')
+    contacts_parser.add_argument('--name')
+
+    whoami_parser = subparsers.add_parser('whoami', help='Show account context')
+    whoami_parser.add_argument('--config')
+    whoami_parser.add_argument('--output', choices=['csv', 'json', 'table'])
+    whoami_parser.add_argument('--savefile')
 
     return parser
 
@@ -113,28 +123,51 @@ def execute_report(
     """
     Execute selected report and return normalized rows.
     """
+    client = MailchimpClient(config_path=normalized_args['config'])
+    root_data = client.validate_connection()
+
+    if normalized_args['report'] == 'whoami':
+        return whoami(client=client, root_data=root_data)
+
+    if normalized_args.get('audience') and not normalized_args.get('audience_id'):
+        normalized_args['audience_id'] = resolve_audience_id(
+            client=client,
+            audience=normalized_args['audience'],
+        )
+        if normalized_args['report'] == 'campaigns':
+            normalized_args['api_params']['list_id'] = normalized_args['audience_id']
 
     if normalized_args['report'] == 'audiences':
         return list_audiences(
             client=client,
             limit=normalized_args['limit'],
             api_params=normalized_args['api_params'],
-            audience_id=normalize_args.get('audience_id'),
-            )
+            audience_id=normalized_args['audience_id'],
+        )
 
     if normalized_args['report'] == 'campaigns':
-        return list_campaigns(
+        rows = list_campaigns(
             client=client,
             limit=normalized_args['limit'],
             api_params=normalized_args['api_params'],
-            )
+        )
+        return apply_local_filters(
+            report='campaigns',
+            rows=rows,
+            filters=normalized_args['filters'],
+        )
 
     if normalized_args['report'] == 'contacts':
-        return list_contacts(
+        rows = list_contacts(
             client=client,
             audience_id=normalized_args['audience_id'],
             limit=normalized_args['limit'],
             api_params=normalized_args['api_params'],
+        )
+        return apply_local_filters(
+            report='contacts',
+            rows=rows,
+            filters=normalized_args['filters'],
         )
 
     raise ValueError('Unknown report requested')
@@ -158,6 +191,10 @@ def main() -> None:
             limit=None,
             audience=None,
             audience_id=None,
+            audience=None,
+            subject=None,
+            email=None,
+            name=None,
             start_date=None,
             end_date=None,
             last=None,

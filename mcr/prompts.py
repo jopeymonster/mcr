@@ -5,8 +5,7 @@ from __future__ import annotations
 
 import argparse
 
-
-VALID_REPORTS = ['audiences', 'campaigns', 'contacts']
+VALID_REPORTS = ['audiences', 'campaigns', 'contacts', 'whoami']
 FILE_OUTPUTS = {'csv', 'json'}
 
 
@@ -30,10 +29,10 @@ def prompt_for_missing(args: argparse.Namespace) -> argparse.Namespace:
         args.audience = None
 
     if not args.report:
-        choice = input('Choose report type (audiences/campaigns/contacts): ').strip()
+        choice = input('Choose report type (audiences/campaigns/contacts/whoami): ').strip()
         while choice not in VALID_REPORTS:
             choice = input(
-                'Invalid report. Choose audiences, campaigns, or contacts: '
+                'Invalid report. Choose audiences, campaigns, contacts, or whoami: '
             ).strip()
         args.report = choice
 

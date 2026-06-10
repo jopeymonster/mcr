@@ -76,6 +76,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     add_common_args(contacts_parser)
     contacts_parser.add_argument('--limit', type=int)
+    contacts_parser.add_argument('--audience')
     contacts_parser.add_argument('--audience-id')
     contacts_parser.add_argument('--audience')
     contacts_parser.add_argument('--email')
@@ -115,7 +116,10 @@ def normalize_report_argv(tokens: list[str], report: str) -> list[str]:
     return [report] + reordered
 
 
-def execute_report(normalized_args: dict[str, Any]) -> list[dict[str, Any]]:
+def execute_report(
+        client: MailchimpClient,
+        normalized_args: dict[str, Any],
+    ) -> list[dict[str, Any]]:
     """
     Execute selected report and return normalized rows.
     """
@@ -185,6 +189,7 @@ def main() -> None:
             output=pre_args.output,
             savefile=pre_args.savefile,
             limit=None,
+            audience=None,
             audience_id=None,
             audience=None,
             subject=None,
@@ -238,12 +243,21 @@ def main() -> None:
             and getattr(args, 'audience_id', None) is None
         ):
             args.audience_id = prompted_args.audience_id
+        if getattr(args, 'audience', None) is None:
+            args.audience = prompted_args.audience
 
     if prompted_args is None:
         args = prompt_for_missing(args)
 
     normalized_args = normalize_args(args)
-    rows = execute_report(normalized_args)
+    client = MailchimpClient(config_path=normalized_args['config'])
+    client.validate_connection()
+
+    if normalized_args['report'] in {'contact','campaigns','audiences'}:
+        normalized_args = resolve_audience(client, normalized_args)
+        normalized_args['api_params'] = build_api_params(normalized_args)
+
+    rows = execute_report(client, normalized_args)
     output_results(
         rows=rows,
         output_format=normalized_args['output'],

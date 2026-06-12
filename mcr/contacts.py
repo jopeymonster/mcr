@@ -27,12 +27,17 @@ def list_contacts(
     )
     rows: list[dict[str, Any]] = []
     for item in members:
+        merge_fields = item.get('merge_fields') or {}
+        first_name = merge_fields.get('FNAME', '')
+        last_name = merge_fields.get('LNAME', '')
         rows.append(
             {
                 'id': item.get('id', ''),
                 'email_address': item.get('email_address', ''),
                 'status': item.get('status', ''),
                 'full_name': item.get('full_name', ''),
+                'first_name': first_name,
+                'last_name': last_name,
                 'member_rating': item.get('member_rating', 0),
                 'timestamp_signup': item.get('timestamp_signup',''),
                 'timestamp_opt': item.get('timestamp_opt',''),

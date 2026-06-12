@@ -9,13 +9,15 @@ import argparse
 import sys
 from typing import Any
 
-from mcr.audiences import list_audiences
+from mcr.args import normalize_args
+from mcr.audiences import list_audiences, resolve_audience_id
 from mcr.campaigns import list_campaigns
 from mcr.client import MailchimpClient
-from mcr.args import normalize_args
 from mcr.common import output_results
 from mcr.contacts import list_contacts
-from mcr.prompts import prompt_for_missing, VALID_REPORTS
+from mcr.filters import apply_local_filters
+from mcr.prompts import VALID_REPORTS, prompt_for_missing
+from mcr.whoami import whoami
 
 
 def build_pre_parser() -> argparse.ArgumentParser:
@@ -58,10 +60,15 @@ def build_parser() -> argparse.ArgumentParser:
     audiences_parser = subparsers.add_parser('audiences', help='List audiences')
     add_common_args(audiences_parser)
     audiences_parser.add_argument('--limit', type=int)
+    audiences_parser.add_argument('--audience-id')
+    audiences_parser.add_argument('--audience')
 
     campaigns_parser = subparsers.add_parser('campaigns', help='List campaigns')
     add_common_args(campaigns_parser)
     campaigns_parser.add_argument('--limit', type=int)
+    campaigns_parser.add_argument('--audience-id')
+    campaigns_parser.add_argument('--audience')
+    campaigns_parser.add_argument('--subject')
 
     contacts_parser = subparsers.add_parser(
         'contacts',
@@ -70,6 +77,14 @@ def build_parser() -> argparse.ArgumentParser:
     add_common_args(contacts_parser)
     contacts_parser.add_argument('--limit', type=int)
     contacts_parser.add_argument('--audience-id')
+    contacts_parser.add_argument('--audience')
+    contacts_parser.add_argument('--email')
+    contacts_parser.add_argument('--name')
+
+    whoami_parser = subparsers.add_parser('whoami', help='Show account context')
+    whoami_parser.add_argument('--config')
+    whoami_parser.add_argument('--output', choices=['csv', 'json', 'table'])
+    whoami_parser.add_argument('--savefile')
 
     return parser
 
@@ -100,39 +115,129 @@ def normalize_report_argv(tokens: list[str], report: str) -> list[str]:
     return [report] + reordered
 
 
+def build_prompt_namespace(pre_args: argparse.Namespace) -> argparse.Namespace:
+    """Build default values used before interactive prompting."""
+    return argparse.Namespace(
+        report=None,
+        config=pre_args.config,
+        output=pre_args.output,
+        savefile=pre_args.savefile,
+        limit=None,
+        audience_id=None,
+        audience=None,
+        subject=None,
+        email=None,
+        name=None,
+        start_date=None,
+        end_date=None,
+        last=None,
+        previous=None,
+    )
+
+
+def apply_pre_args(args: argparse.Namespace, pre_args: argparse.Namespace) -> None:
+    """Apply pre-parser values to the report parser namespace."""
+    for field in ('config', 'output', 'savefile'):
+        value = getattr(pre_args, field, None)
+        if value is not None:
+            setattr(args, field, value)
+
+
+def apply_prompted_args(
+    args: argparse.Namespace,
+    prompted_args: argparse.Namespace | None,
+) -> None:
+    """Fill missing parsed values from prior prompted values."""
+    if prompted_args is None:
+        return
+
+    for field in (
+        'config',
+        'output',
+        'savefile',
+        'limit',
+        'audience_id',
+        'audience',
+        'subject',
+        'email',
+        'name',
+        'start_date',
+        'end_date',
+        'last',
+        'previous',
+    ):
+        if getattr(args, field, None) is None:
+            setattr(args, field, getattr(prompted_args, field, None))
+
+
+def resolve_requested_audience(
+    client: MailchimpClient,
+    normalized_args: dict[str, Any],
+) -> None:
+    """Resolve an audience name into audience_id when needed."""
+    if not normalized_args.get('audience') or normalized_args.get('audience_id'):
+        return
+
+    audience_id = resolve_audience_id(
+        client=client,
+        audience=normalized_args['audience'],
+    )
+    normalized_args['audience_id'] = audience_id
+
+    if normalized_args['report'] == 'campaigns':
+        normalized_args['api_params']['list_id'] = audience_id
+
+
 def execute_report(normalized_args: dict[str, Any]) -> list[dict[str, Any]]:
     """
     Execute selected report and return normalized rows.
     """
     client = MailchimpClient(config_path=normalized_args['config'])
-    client.validate_connection()
+    root_data = client.validate_connection()
+
+    if normalized_args['report'] == 'whoami':
+        return whoami(client=client, root_data=root_data)
+
+    resolve_requested_audience(client=client, normalized_args=normalized_args)
 
     if normalized_args['report'] == 'audiences':
         return list_audiences(
             client=client,
             limit=normalized_args['limit'],
             api_params=normalized_args['api_params'],
-            )
+            audience_id=normalized_args['audience_id'],
+        )
 
     if normalized_args['report'] == 'campaigns':
-        return list_campaigns(
+        rows = list_campaigns(
             client=client,
             limit=normalized_args['limit'],
             api_params=normalized_args['api_params'],
-            )
+        )
+        return apply_local_filters(
+            report='campaigns',
+            rows=rows,
+            filters=normalized_args['filters'],
+        )
 
     if normalized_args['report'] == 'contacts':
-        return list_contacts(
+        rows = list_contacts(
             client=client,
             audience_id=normalized_args['audience_id'],
             limit=normalized_args['limit'],
             api_params=normalized_args['api_params'],
+        )
+        return apply_local_filters(
+            report='contacts',
+            rows=rows,
+            filters=normalized_args['filters'],
         )
 
     raise ValueError('Unknown report requested')
 
 
 def main() -> None:
+    """Parse CLI arguments, execute the report, and output rows."""
     argv = sys.argv[1:]
 
     pre_parser = build_pre_parser()
@@ -141,22 +246,13 @@ def main() -> None:
     report = detect_report(remaining)
     prompted_args: argparse.Namespace | None = None
 
-    if not report:
-        prompted_args = argparse.Namespace(
-            report=None,
-            config=pre_args.config,
-            output=pre_args.output,
-            savefile=pre_args.savefile,
-            limit=None,
-            audience_id=None,
-            start_date=None,
-            end_date=None,
-            last=None,
-            previous=None,
-        )
-        prompted_args = prompt_for_missing(prompted_args)
-        report = prompted_args.report
+    if not report and any(token in {'-h', '--help'} for token in remaining):
+        build_parser().parse_args(remaining)
+        return
 
+    if not report:
+        prompted_args = prompt_for_missing(build_prompt_namespace(pre_args))
+        report = prompted_args.report
         remaining = normalize_report_argv(remaining, report)
 
         if report == 'contacts' and prompted_args.audience_id:
@@ -168,35 +264,8 @@ def main() -> None:
     parser = build_parser()
     args = parser.parse_args(remaining)
 
-    if pre_args.config is not None:
-        args.config = pre_args.config
-    if pre_args.output is not None:
-        args.output = pre_args.output
-    if pre_args.savefile is not None:
-        args.savefile = pre_args.savefile
-
-    if prompted_args is not None:
-        if getattr(args, 'config', None) is None:
-            args.config = prompted_args.config
-        if getattr(args, 'output', None) is None:
-            args.output = prompted_args.output
-        if getattr(args, 'savefile', None) is None:
-            args.savefile = prompted_args.savefile
-        if getattr(args, 'limit', None) is None:
-            args.limit = prompted_args.limit
-        if getattr(args, 'start_date', None) is None:
-            args.start_date = prompted_args.start_date
-        if getattr(args, 'end_date', None) is None:
-            args.end_date = prompted_args.end_date
-        if getattr(args, 'last', None) is None:
-            args.last = prompted_args.last
-        if getattr(args, 'previous', None) is None:
-            args.previous = prompted_args.previous
-        if (
-            getattr(args, 'report', None) == 'contacts'
-            and getattr(args, 'audience_id', None) is None
-        ):
-            args.audience_id = prompted_args.audience_id
+    apply_pre_args(args, pre_args)
+    apply_prompted_args(args, prompted_args)
 
     if prompted_args is None:
         args = prompt_for_missing(args)

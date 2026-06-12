@@ -18,11 +18,9 @@ dev = [
 mcr = 'mcr.main:main'
 
 [build-system]
-requires = ['setuptools>=68', 'wheel']
-build-backend = 'setuptools.build_meta'
-
-[tool.setuptools]
-packages = ['mcr']
+requires = []
+build-backend = 'mcr_build_backend'
+backend-path = ['.']
 
 [tool.ruff]
 line-length = 88

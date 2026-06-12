@@ -5,37 +5,47 @@ from __future__ import annotations
 
 import argparse
 
-
-VALID_REPORTS = ['audiences', 'campaigns', 'contacts']
+VALID_REPORTS = ['audiences', 'campaigns', 'contacts', 'whoami']
 FILE_OUTPUTS = {'csv', 'json'}
+
+
+def ensure_prompt_attrs(args: argparse.Namespace) -> None:
+    """Ensure optional prompt attributes exist on the namespace."""
+    for field in (
+        'report',
+        'config',
+        'output',
+        'savefile',
+        'limit',
+        'audience_id',
+        'audience',
+        'subject',
+        'email',
+        'name',
+        'start_date',
+        'end_date',
+        'last',
+        'previous',
+    ):
+        if not hasattr(args, field):
+            setattr(args, field, None)
 
 
 def prompt_for_missing(args: argparse.Namespace) -> argparse.Namespace:
     """
     Prompt for required missing arguments and return updated namespace.
     """
-    if not hasattr(args, 'report'):
-        args.report = None
-    if not hasattr(args, 'config'):
-        args.config = None
-    if not hasattr(args, 'output'):
-        args.output = None
-    if not hasattr(args, 'savefile'):
-        args.savefile = None
-    if not hasattr(args, 'limit'):
-        args.limit = None
-    if not hasattr(args, 'audience_id'):
-        args.audience_id = None
+    ensure_prompt_attrs(args)
 
     if not args.report:
-        choice = input('Choose report type (audiences/campaigns/contacts): ').strip()
+        choice = input('Choose report type (audiences/campaigns/contacts/whoami): ').strip()
         while choice not in VALID_REPORTS:
             choice = input(
-                'Invalid report. Choose audiences, campaigns, or contacts: '
+                'Invalid report. Choose audiences, campaigns, contacts, or whoami: '
             ).strip()
         args.report = choice
 
-    if args.report == 'contacts' and not args.audience_id:
+    if args.report == 'contacts' and not args.audience_id and not args.audience:
         audience_id = input('Enter Mailchimp audience ID: ').strip()
         while not audience_id:
             audience_id = input(
